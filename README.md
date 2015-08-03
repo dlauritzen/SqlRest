@@ -93,9 +93,11 @@ while \_order\_desc uses descending (Z-A) order.
 # Raw Queries
 
 In case of complex queries not covered elsewhere in the API, it is possible to pass up a raw query
-to the server which is run, unmodified.
+to the server which is run, unmodified. Make a POST request to
 
 > {Base Url}/{Database}/\_query
+
+with the query as the post body.
 
 DELETE and DROP queries are disallowed, as is executing multiple queries in a single request.
 Since my code for detecting multiple queries is very simple, any semicolon not at the end or beginning
