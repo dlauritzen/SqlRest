@@ -20,6 +20,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIG = configparser.ConfigParser()
 CONFIG.read(os.path.join(BASE_DIR, 'sqlrest', 'config.ini'))
 
+COMMAND_PREFIX = CONFIG.get('sqlrest', 'COMMAND_PREFIX', fallback='_')
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
 

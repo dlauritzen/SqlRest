@@ -52,10 +52,10 @@ def parse_path(path):
     parts = [x for x in path.split('/') if x]
     while parts:
         part = parts.pop(0)
-        if part.startswith('_'):
+        if part.startswith(settings.COMMAND_PREFIX):
             if id:
                 raise SqlRestException('Invalid path.')
-            command = part[1:].lower()
+            command = part[len(settings.COMMAND_PREFIX):].lower()
             break
         elif database is None:
             database = part
@@ -154,12 +154,12 @@ def build_query(conn=None, command=None, database=None, table=None, id=None, w=N
             raise SqlRestException('Invalid body: {}'.format(e))
 
     fields = '*'
-    if w and '_fields' in w:
-        fields = ', '.join([conn.escape_string(v) for v in get_list(w, '_fields')])
+    if w and '{}fields'.format(settings.COMMAND_PREFIX) in w:
+        fields = ', '.join([conn.escape_string(v) for v in get_list(w, '{}fields'.format(settings.COMMAND_PREFIX))])
     if id:
         id_field = 'id'
-        if w and '_idfield' in w:
-            id_field = conn.escape_string(w['_idfield'])
+        if w and '{}idfield'.format(settings.COMMAND_PREFIX) in w:
+            id_field = conn.escape_string(w['{}idfield'.format(settings.COMMAND_PREFIX)])
         try:
             id = int(id)
         except:
@@ -189,7 +189,7 @@ def build_query(conn=None, command=None, database=None, table=None, id=None, w=N
             if w:
                 params = {}
                 for key, value in w.items():
-                    if key.startswith('_'): continue
+                    if key.startswith(settings.COMMAND_PREFIX): continue
                     operator = '='
                     if '__' in key:
                         original_key = key
@@ -260,6 +260,19 @@ def build_query(conn=None, command=None, database=None, table=None, id=None, w=N
             query = 'SELECT {} FROM {}'.format(fields, table)
             if where:
                 query += ' WHERE {}'.format(' AND '.join(where))
+            if w:
+                if '{}order'.format(settings.COMMAND_PREFIX) in w:
+                    query += ' ORDER BY {}'.format(conn.escape_string(w['{}order'.format(settings.COMMAND_PREFIX)]))
+                elif '{}order_desc'.format(settings.COMMAND_PREFIX) in w:
+                    query += ' ORDER BY {} DESC'.format(conn.escape_string(w['{}order_desc'.format(settings.COMMAND_PREFIX)]))
+                try:
+                    if '{}limit'.format(settings.COMMAND_PREFIX) in w:
+                        query += ' LIMIT {}'.format(int(w['{}limit'.format(settings.COMMAND_PREFIX)]))
+                    if '{}offset'.format(settings.COMMAND_PREFIX) in w:
+                        query += ' OFFSET {}'.format(int(w['{}offset'.format(settings.COMMAND_PREFIX)]))
+                except:
+                    raise SqlRestException('Limit and/or offset must be integers.')
+
         elif method == 'POST':
             if not values:
                 raise SqlRestException('Body required for insert.')
